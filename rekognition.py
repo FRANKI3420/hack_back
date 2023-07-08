@@ -39,7 +39,7 @@ def imageCut(left,top,width,height):
 target_file = "./data/target.jpg"
 
 def main():
-    source_file = "./data/source.jpg"
+    source_file = "./data/source1.jpg"
     # target_file = "./data/target.jpg"
     face_matches = compare_faces(source_file, target_file)
     imageCut(face_matches[0]["Face"]["BoundingBox"]["Left"],
