@@ -3,6 +3,13 @@
 
 import boto3
 from PIL import Image
+import os
+import openai
+openai.api_type = "azure"
+openai.api_version = "2023-05-15" 
+openai.api_base = "https://chatgpt-mc-westeurope.openai.azure.com/"  # Your Azure OpenAI resource's endpoint value.
+openai.api_key = "7b78d5788869441b82ddd8cf3754d1b9"
+deployment_name='chatgpt-mc-westeurope'
 
 # sourceFile: ベースとなる画像, targetFile: 比較対象の画像
 def compare_faces(sourceFile, targetFile):
@@ -39,6 +46,21 @@ def imageCut(left, top, width, height):
 
 target_file = "./data/target.jpg"
 
+def mc():
+    response = openai.ChatCompletion.create(
+    engine=deployment_name, # The deployment name you chose when you deployed the ChatGPT or GPT-4 model.
+    messages=[
+        {"role": "system", "content": "イベントに合わせて一言で客を盛り上げる役割です。"},
+        {"role": "user", "content": "チームで開発をするイベントに参加しています。"}
+    ]
+    )
+
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket('kokushimusou')
+    bucket.upload_file('./data/comment.txt.', 'cropped.jpg')
+
+    print(response['content'])
+
 def main():
     s3 = boto3.client('s3')
     s3.download_file('kokushimusou', 'hack_test.png', './data/test_1.png')
@@ -58,6 +80,7 @@ def main():
     bucket.upload_file(source_file,'similar.jpg')
     print(f"Similarity: {face_matches[0]['Similarity']}")
     # print("Face matches: " + str(face_matches))
+    mc()
 
 if __name__ == "__main__":
     main()
