@@ -1,33 +1,29 @@
-#Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#PDX-License-Identifier: MIT-0 (For details, see https://github.com/awsdocs/amazon-rekognition-developer-guide/blob/master/LICENSE-SAMPLECODE.)
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0 (For details, see https://github.com/awsdocs/amazon-rekognition-developer-guide/blob/master/LICENSE-SAMPLECODE.)
 
 import boto3
 from PIL import Image
 
 # sourceFile: ベースとなる画像, targetFile: 比較対象の画像
 def compare_faces(sourceFile, targetFile):
+    session = boto3.Session(profile_name='default')
+    client = session.client('rekognition')
 
-    seesion = boto3.Session(profile_name='default')
-    client=boto3.client('rekognition')
-   
-    imageSource=open(sourceFile,'rb')
-    imageTarget=open(targetFile,'rb')
-
-    # SimilarityThreshold: 類似度の閾値
-    response=client.compare_faces(SimilarityThreshold=0,
-                                  SourceImage={'Bytes': imageSource.read()},
-                                  TargetImage={'Bytes': imageTarget.read()})
-    
+    with open(sourceFile, 'rb') as imageSource, open(targetFile, 'rb') as imageTarget:
+        # SimilarityThreshold: 類似度の閾値
+        response = client.compare_faces(
+            SimilarityThreshold=0,
+            SourceImage={'Bytes': imageSource.read()},
+            TargetImage={'Bytes': imageTarget.read()}
+        )
 
     for faceMatch in response['FaceMatches']:
         position = faceMatch['Face']['BoundingBox']
         similarity = str(faceMatch['Similarity'])
 
-    imageSource.close()
-    imageTarget.close()     
-    return response['FaceMatches']    
+    return response['FaceMatches']
 
-def imageCut(left,top,width,height):
+def imageCut(left, top, width, height):
     image = Image.open(target_file)
     left = image.width * left
     top = image.height * top
@@ -36,30 +32,32 @@ def imageCut(left,top,width,height):
     cropped_image = image.crop((left, top, right, bottom))
     cropped_image.save('./data/cropped.jpg')
 
-    s3 = boto3.resource('s3') #S3オブジェクトを取得
-    bucket = s3.Bucket('バケット名')
-    bucket.upload_file('UPするファイルのpath', '保存先S3のpath')
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket('kokushimusou')
+    bucket.upload_file('./data/cropped.jpg', 'cropped.jpg')
     
+
 target_file = "./data/target.jpg"
 
 def main():
-    s3 = boto3.resource('s3') #S3オブジェクトを取得
-    bucket = s3.Bucket('バケット名')
-    target_file = bucket.download_file('S3のバケット以下のpath', '保存先のpath')
+    s3 = boto3.client('s3')
+    s3.download_file('kokushimusou', 'hack_test.png', './data/test_1.png')
 
-    source_file = "./data/source.jpg"
-    # target_file = "./data/target.jpg"
+    source_file = "./data/source2.png"
+    target_file = "./data/test_1.png"
     face_matches = compare_faces(source_file, target_file)
-    imageCut(face_matches[0]["Face"]["BoundingBox"]["Left"],
-             face_matches[0]["Face"]["BoundingBox"]["Top"],
-             face_matches[0]["Face"]["BoundingBox"]["Width"],
-             face_matches[0]["Face"]["BoundingBox"]["Height"],
-             )
-    
-    print(f"Similarity:{face_matches[0]['Similarity']}")
+    imageCut(
+        face_matches[0]["Face"]["BoundingBox"]["Left"],
+        face_matches[0]["Face"]["BoundingBox"]["Top"],
+        face_matches[0]["Face"]["BoundingBox"]["Width"],
+        face_matches[0]["Face"]["BoundingBox"]["Height"]
+    )
+
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket('kokushimusou')
+    bucket.upload_file(source_file,'similar.jpg')
+    print(f"Similarity: {face_matches[0]['Similarity']}")
     # print("Face matches: " + str(face_matches))
-
-
 
 if __name__ == "__main__":
     main()
