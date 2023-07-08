@@ -36,9 +36,17 @@ def imageCut(left,top,width,height):
     cropped_image = image.crop((left, top, right, bottom))
     cropped_image.save('./data/cropped.jpg')
 
+    s3 = boto3.resource('s3') #S3オブジェクトを取得
+    bucket = s3.Bucket('バケット名')
+    bucket.upload_file('UPするファイルのpath', '保存先S3のpath')
+    
 target_file = "./data/target.jpg"
 
 def main():
+    s3 = boto3.resource('s3') #S3オブジェクトを取得
+    bucket = s3.Bucket('バケット名')
+    target_file = bucket.download_file('S3のバケット以下のpath', '保存先のpath')
+
     source_file = "./data/source.jpg"
     # target_file = "./data/target.jpg"
     face_matches = compare_faces(source_file, target_file)
