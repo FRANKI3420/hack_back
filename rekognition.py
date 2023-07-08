@@ -45,24 +45,23 @@ def imageCut(left, top, width, height, image):
     cropped_image = image.crop((left, top, right, bottom))
     cropped_image.save('./data/cropped.png')
 
-    
-
-
 
 def mc():
     response = openai.ChatCompletion.create(
     engine=deployment_name, # The deployment name you chose when you deployed the ChatGPT or GPT-4 model.
     messages=[
-        {"role": "system", "content": "イベントに合わせて一言で客を盛り上げる役割です。"},
+        {"role": "system", "content": "イベントに合わせて25文字以内の一言で客を盛り上げる役割です。"},
         {"role": "user", "content": "チームで開発をするイベントに参加しています。"}
     ]
     )
 
+    with open("comment.txt", "w") as contents:
+        contents.write(response['choices'][0]['message']['content'])
+
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('kokushimusou')
-    bucket.upload_file('./data/comment.txt.', 'cropped.jpg')
-
-    print(response['content'])
+    bucket.upload_file('./comment.txt', 'coment.txt')
+    print(response['choices'][0]['message']['content'])
 
 def main():
     global target_file
@@ -101,3 +100,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
