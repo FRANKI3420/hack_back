@@ -13,11 +13,11 @@ openai.api_version = "2023-05-15"
 openai.api_base = "https://chatgpt-mc-westeurope.openai.azure.com/"  # Your Azure OpenAI resource's endpoint value.
 openai.api_key = "7b78d5788869441b82ddd8cf3754d1b9"
 deployment_name='chatgpt-mc-westeurope'
-
+stage = os.environ.get('STAGE', 'local')
 
 # sourceFile: ベースとなる画像, targetFile: 比較対象の画像
 def compare_faces(sourceFile, targetFile):
-    session = boto3.Session(profile_name='default')
+    session = boto3.Session() if stage == 'dev' else boto3.Session(profile_name='default')
     client = session.client('rekognition')
 
     try:
@@ -47,7 +47,7 @@ def imageCut(left, top, width, height, image):
     right = left + image.width * width
     bottom = top + image.height * height
     cropped_image = image.crop((left, top, right, bottom))
-    cropped_image.save('./data/cropped.png')
+    cropped_image.save('/tmp/cropped.png')
 
 
 def mc():
@@ -73,7 +73,7 @@ def name(file,chr):
     number = int(matches[0])
 
     if chr == 0:
-        chr_name = real_chr[number]
+        chr_name = real_chr[number-1]
     elif chr == 1:
         chr_name = anime_chr[number]
 
@@ -82,10 +82,10 @@ def main(event, context):
     
     global target_file, text
     s3 = boto3.client('s3')
-    s3.download_file('kokushimusou', 'hack_test.png', './data/getimg.png')
+    s3.download_file('kokushimusou', 'hack_test.png', '/tmp/getimg.png')
     file_num = [random.randint(1, 40)  for _ in range(3)]
     Similarity ,Similarity_degree = [], []
-    target_file = "./data/getimg.png"
+    target_file = "/tmp/getimg.png"
     for num in file_num:
         source_file = f"./data/source{num}.png"
         face_matches = compare_faces(source_file, target_file)
@@ -93,7 +93,6 @@ def main(event, context):
             Similarity.append([face_matches[0],source_file])
             Similarity_degree.append(face_matches[0]["Similarity"])
     index = Similarity_degree.index(max(Similarity_degree))
-    # print(Similarity_degree)
     print(index)
 
     image = Image.open(target_file)
@@ -107,23 +106,22 @@ def main(event, context):
 
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('kokushimusou')
-    bucket.upload_file(Similarity[index][1],'similar.png')
-    bucket.upload_file('./data/cropped.png', 'cropped.png')
-    print(source_file)
+    similar_image_path = Similarity[index][1]
+    bucket.upload_file(similar_image_path,'similar.png')
+    bucket.upload_file('/tmp/cropped.png', 'cropped.png')
     print(f"Similarity: {Similarity[index][0]['Similarity']}")
-    # print("Face matches: " + str(face_matches))
     chr = 0
     text = mc()
-    name(source_file,chr)
+    name(similar_image_path,chr)
     return {
         'statusCode': 200,
         'body': json.dumps({
         "conment": text,
         "name": chr_name,
-        })
+        }, ensure_ascii=False)
     }
 
 if __name__ == "__main__":
-    main()
+    main({}, {})
 
 
