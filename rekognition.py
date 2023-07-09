@@ -1,6 +1,6 @@
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0 (For details, see https://github.com/awsdocs/amazon-rekognition-developer-guide/blob/master/LICENSE-SAMPLECODE.)
-
+import json
 import boto3,random
 from PIL import Image
 import os
@@ -64,15 +64,16 @@ def mc():
     bucket.upload_file('./comment.txt', 'coment.txt')
     print(response['choices'][0]['message']['content'])
 
+    return response['choices'][0]['message']['content']
+
 def name(file,chr):
+    global chr_name
     real_chr = ["かまいたち山内","かまいたち濱家","千鳥ノブ","和牛水田","インパルス板倉","村上春樹","大野智","イチロー","大谷翔平","小泉進次郎","トム・クルーズ","亀梨和也","ひろゆき","桐生祥秀","三苫薫","羽鳥慎一","ヒコロヒー","芦田愛菜","藤田ニコル","岸田文雄","マリリンモンロー","櫻井翔","大野智","小島瑠璃子","西島秀俊","山下智久","小栗旬","DAIGO","松岡修造","堺雅人","藤原竜也","サンドウィッチマン伊達","サンドウィッチマン富澤","羽生弦","有村架純","ダウンタウン浜田","ダウンタウン松本","出川哲朗","オードリー春日","オードリー若林"]
     anime_chr = ["のびた","ジャイアン","スネ夫","出木杉","大野くん","永山くん","杉山くん","フグ田マスオ","ノリスケ","イクラちゃん"]
-    filename = "source14.png"
-
     # ファイル名から数字を抽出する正規表現パターン
     pattern = r"\d+"
     # 正規表現パターンにマッチする部分を抽出
-    matches = re.findall(pattern, filename)
+    matches = re.findall(pattern, file)
     number = int(matches[0])
 
     if chr == 0:
@@ -87,8 +88,8 @@ def name(file,chr):
     bucket = s3.Bucket('kokushimusou')
     bucket.upload_file('./name.txt', 'name.txt')
 
-def main():
-    global target_file
+def main(event, context):
+    global target_file, text
     s3 = boto3.client('s3')
     s3.download_file('kokushimusou', 'hack_test.png', './data/getimg.png')
     file_num = [random.randint(1, 40)  for _ in range(5)]
@@ -101,7 +102,7 @@ def main():
             Similarity.append([face_matches[0],source_file])
             Similarity_degree.append(face_matches[0]["Similarity"])
     index = Similarity_degree.index(max(Similarity_degree))
-    print(Similarity_degree)
+    # print(Similarity_degree)
     print(index)
 
     image = Image.open(target_file)
@@ -121,8 +122,15 @@ def main():
     print(f"Similarity: {Similarity[index][0]['Similarity']}")
     # print("Face matches: " + str(face_matches))
     chr = 0
-    mc()
+    text = mc()
     name(source_file,chr)
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+        "conment": text,
+        "name": chr_name,
+        })
+    }
 
 if __name__ == "__main__":
     main()
