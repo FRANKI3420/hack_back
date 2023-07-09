@@ -10,8 +10,8 @@ import openai
 
 openai.api_type = "azure"
 openai.api_version = "2023-05-15" 
-openai.api_base = "https://chatgpt-mc-westeurope.openai.azure.com/"  # Your Azure OpenAI resource's endpoint value.
-openai.api_key = "7b78d5788869441b82ddd8cf3754d1b9"
+openai.api_base = os.environ.get('API_BASE')  # Your Azure OpenAI resource's endpoint value.
+openai.api_key = os.environ.get('API_KEY')
 deployment_name='chatgpt-mc-westeurope'
 stage = os.environ.get('STAGE', 'local')
 
