@@ -6,11 +6,14 @@ from PIL import Image
 import os
 import re
 import openai
+
+
 openai.api_type = "azure"
 openai.api_version = "2023-05-15" 
 openai.api_base = "https://chatgpt-mc-westeurope.openai.azure.com/"  # Your Azure OpenAI resource's endpoint value.
 openai.api_key = "7b78d5788869441b82ddd8cf3754d1b9"
 deployment_name='chatgpt-mc-westeurope'
+
 
 # sourceFile: ベースとなる画像, targetFile: 比較対象の画像
 def compare_faces(sourceFile, targetFile):
@@ -55,13 +58,6 @@ def mc():
         {"role": "user", "content": "チームで開発をするイベントに参加しています。"}
     ]
     )
-
-    with open("comment.txt", "w") as contents:
-        contents.write(response['choices'][0]['message']['content'])
-
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket('kokushimusou')
-    bucket.upload_file('./comment.txt', 'coment.txt')
     print(response['choices'][0]['message']['content'])
 
     return response['choices'][0]['message']['content']
@@ -81,18 +77,13 @@ def name(file,chr):
     elif chr == 1:
         chr_name = anime_chr[number]
 
-    with open("name.txt", "w") as contents:
-        contents.write(chr_name)
-
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket('kokushimusou')
-    bucket.upload_file('./name.txt', 'name.txt')
 
 def main(event, context):
+    
     global target_file, text
     s3 = boto3.client('s3')
     s3.download_file('kokushimusou', 'hack_test.png', './data/getimg.png')
-    file_num = [random.randint(1, 40)  for _ in range(5)]
+    file_num = [random.randint(1, 40)  for _ in range(3)]
     Similarity ,Similarity_degree = [], []
     target_file = "./data/getimg.png"
     for num in file_num:
