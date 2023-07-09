@@ -4,6 +4,7 @@
 import boto3,random
 from PIL import Image
 import os
+import re
 import openai
 openai.api_type = "azure"
 openai.api_version = "2023-05-15" 
@@ -63,6 +64,29 @@ def mc():
     bucket.upload_file('./comment.txt', 'coment.txt')
     print(response['choices'][0]['message']['content'])
 
+def name(file,chr):
+    real_chr = ["かまいたち山内","かまいたち濱家","千鳥ノブ","和牛水田","インパルス板倉","村上春樹","大野智","イチロー","大谷翔平","小泉進次郎","トム・クルーズ","亀梨和也","ひろゆき","桐生祥秀","三苫薫","羽鳥慎一","ヒコロヒー","芦田愛菜","藤田ニコル","岸田文雄","マリリンモンロー","櫻井翔","大野智","小島瑠璃子","西島秀俊","山下智久","小栗旬","DAIGO","松岡修造","堺雅人","藤原竜也","サンドウィッチマン伊達","サンドウィッチマン富澤","羽生弦","有村架純","ダウンタウン浜田","ダウンタウン松本","出川哲朗","オードリー春日","オードリー若林"]
+    anime_chr = ["のびた","ジャイアン","スネ夫","出木杉","大野くん","永山くん","杉山くん","フグ田マスオ","ノリスケ","イクラちゃん"]
+    filename = "source14.png"
+
+    # ファイル名から数字を抽出する正規表現パターン
+    pattern = r"\d+"
+    # 正規表現パターンにマッチする部分を抽出
+    matches = re.findall(pattern, filename)
+    number = int(matches[0])
+
+    if chr == 0:
+        chr_name = real_chr[number]
+    elif chr == 1:
+        chr_name = anime_chr[number]
+
+    with open("name.txt", "w") as contents:
+        contents.write(chr_name)
+
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket('kokushimusou')
+    bucket.upload_file('./name.txt', 'name.txt')
+
 def main():
     global target_file
     s3 = boto3.client('s3')
@@ -96,7 +120,9 @@ def main():
     print(source_file)
     print(f"Similarity: {Similarity[index][0]['Similarity']}")
     # print("Face matches: " + str(face_matches))
+    chr = 0
     mc()
+    name(source_file,chr)
 
 if __name__ == "__main__":
     main()
